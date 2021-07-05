@@ -1,36 +1,15 @@
 <template>
   <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Kelas {{ nama_kelas }}</h1>
-            <h5>Kamis, 06.00-08.00</h5>
-          </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item"><a href="#">Kelas</a></li>
-              <li class="breadcrumb-item active">Kelas {{ nama_kelas }}</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-      <!-- /.container-fluid -->
-    </section>
 
+<div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel" aria-labelledby="custom-content-below-home-tab">
+<br>
     <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
         <div class="row">
-          <div class="col-2">
-            <button
-              type="button"
-              class="btn btn-primary"
-              @click.prevent="tambahPertemuan"
-            >
+          <div class="col-2-md">
+            <button v-if="pj" type="button" class="btn btn-primary" @click.prevent="tambahPertemuan">
+            <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-lg"> -->
               Pertemuan Baru
             </button>
           </div>
@@ -39,16 +18,16 @@
         <div class="row">
           <div class="col-md-12">
             <div class="card">
-              <div class="card-header">
+              <!-- <div class="card-header">
                 <h3 class="card-title">Form 05</h3>
-              </div>
+              </div> -->
               <div class="card-body table-responsive">
                 <table class="table table-bordered table-hover">
                   <thead>
                     <tr>
                       <th style="width: 10px">Pertemuan</th>
-                      <th>Hari/Tanggal</th>
-                      <th>Pokok Bahasan</th>
+                      <th>Waktu</th>
+                      <th>Materi</th>
                       <th>Jumlah Mahasiswa Hadir</th>
                       <th>Validasi Dosen</th>
                       <th>Validasi Mahasiswa</th>
@@ -58,46 +37,36 @@
                   <tbody>
                     <tr v-for="(form, index) in form05" :key="form.id">
                       <td>{{ form.pertemuan }}</td>
-                      <td>Kamis, 11/08/2020</td>
+                      <td>{{form.created_at}}</td>
                       <td>{{ form.materi }}</td>
-                      <td>220</td>
+                      <td>{{form.jumlah_mahasiswa}}</td>
                       <td>
-                        <i
-                          v-show="form.valid_dosen == 1"
-                          class="fas fa-check"
-                        ></i>
-                        <button
-                          @click="validasi(form.id, index)"
-                          v-show="form.valid_dosen == 0 && isDosen"
-                          type="button"
-                          class="btn btn-primary"
-                        >
+                        <i v-show="form.valid_dosen == true" class="fas fa-check"></i>
+                        <button @click="validasi(form.id, index)" v-show="form.valid_dosen == 0 && isDosen"
+                          type="button" class="btn btn-primary">
                           Validasi
                         </button>
-                             <span v-show="form.valid_dosen == 0 && !isDosen"
-                          >Waiting...</span>
+                        <span v-show="form.valid_dosen == false && !isDosen">Waiting...</span>
                       </td>
                       <td>
-                        <i
-                          v-show="form.valid_mahasiswa == 1"
-                          class="fas fa-check"
-                        ></i>
-                        <button
-                          @click="validasi(form.id, index)"
-                          v-show="form.valid_mahasiswa == 0 && !isDosen"
-                          type="button"
-                          class="btn btn-primary"
-                        >
+                        <i v-show="form.valid_mahasiswa == true" class="fas fa-check"></i>
+                        <button @click="validasi(form.id, index)" v-show="form.valid_mahasiswa == 0 && !isDosen"
+                          type="button" class="btn btn-primary">
                           Validasi
                         </button>
-                        <span v-show="form.valid_mahasiswa == 0 && isDosen"
-                          >Waiting...</span
-                        >
+                        <span v-show="form.valid_mahasiswa == false && isDosen">Waiting...</span>
                       </td>
-                      <td>Button Button Button</td>
+                      <td v-if="isDosen">
+                        <button type="button" class="btn btn-primary">Tambah Tugas</button>
+                        <button type="button" class="btn btn-info">Ubah materi</button>
+                      </td>
+                      <td v-else>
+                        <button :disabled="form.hadir" @click="hadirPertemuan(form.id,index)" type="button" class="btn btn-primary">Hadir</button>
+                        <button v-if="pj" type="button" class="btn btn-info">Validasi Presensi</button>
+                      </td>
                     </tr>
                     <tr v-show="form05.length == 0">
-                      <td colspan="7" style="text-align:center">No data</td>
+                      <td colspan="8" style="text-align:center">No data</td>
                     </tr>
                   </tbody>
                 </table>
@@ -108,47 +77,43 @@
       </div>
     </section>
     <!-- /.content -->
-    <div v-if="show_modal">
-    
-          <div class="modal-dialog modal-lg">
-            <form >
-              <div class="modal-content">
-                <div class="modal-header">
-                  <h4 class="modal-title">Pertemuan Baru</h4>
-                  <button
-                    type="button"
-                    class="close"
-                    data-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">&times;</span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <div class="form-group">
-                    <label for="materi">Pokok Bahasan</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      v-model="materi_baru"
-                      required
-                    />
+    <!-- <div v-if="show_modal">
+      <transition name="modal">
+        <div class="modal-mask">
+          <div class="modal-wrapper">
+            <div class="modal-dialog modal-lg">
+              <form>
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">Pertemuan Baru</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+
+                  <div class="modal-body">
+                    <div class="form-group">
+                      <label for="materi">Pokok Bahasan</label>
+                      <input type="text" class="form-control" v-model="materi_baru" required />
+                    </div>
+                  </div>
+                  <div class="modal-footer ">
+                    <button type="submit" class="btn btn-primary">
+                      Tambah Pertemuan
+                    </button>
                   </div>
                 </div>
-                <div class="modal-footer ">
-                  <button type="submit" class="btn btn-primary">
-                    Tambah Pertemuan
-                  </button>
-                </div>
-              </div>
-            </form>
-            <!-- /.modal-content -->
+              </form>
+              /.modal-content
+            </div>
           </div>
-          <!-- /.modal-dialog -->
         </div>
-        <!-- /.modal -->
-  </div>
+      </transition>
+      /.modal-dialog
+    </div>
+    /.modal -->
   <!-- /.content-wrapper -->
+</div>
 </template>
 
 <script>
@@ -159,13 +124,16 @@ export default {
   name: "Form05",
   data() {
     return {
-      nama_kelas: "",
       form05: [],
-      isDosen: false,
       materi_baru: "",
-      show_modal= false,
+      // show_modal: false,
+      isDosen:false
     };
   },
+  props: [
+    'pj',
+    'sks',
+    ],
   methods: {
     validasi(id, index) {
       const token = localStorage.getItem("token");
@@ -214,7 +182,7 @@ export default {
     },
     callForm05(token) {
       axios
-        .post(
+        .get(
           process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +
@@ -268,6 +236,8 @@ export default {
                 pertemuan: response.data.data.pertemuan,
                 valid_dosen: response.data.data.valid_dosen,
                 valid_mahasiswa: response.data.data.valid_mahasiswa,
+                jumlah_mahasiswa: response.data.data.jumlah_mahasiswa,
+                created_at: response.data.data.created_at
               });
             })
             .catch((err) => {
@@ -278,39 +248,77 @@ export default {
       })
       
     },
+    hadirPertemuan(id,index) {
+      const token = localStorage.getItem("token");
+       Swal.fire({
+        title: "Konfirmasi Kehadiran?",
+        confirmButtonText: "Ya",
+        showDenyButton: true,
+        denyButtonText: "Tidak",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios
+            .post(
+              process.env.VUE_APP_BASEURL +
+                "form-05/" +
+                id +
+                "/hadir?token=" +
+                token,
+              {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+              }
+            )
+            .then(() => {
+              Swal.fire({
+                title: 'Berhasil konfirmasi',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false,
+              });
+              this.form05[index].hadir = true;
+            })
+            .catch((err) => {
+              if (err.response) {
+                if (err.response.status == 401) {
+                  this.$parent.logout();
+                }
+              }
+            });
+        }
+      });
+    }
   },
   created() {
-    this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
+    console.log(this.$route.params.sks);
+    // this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
     const token = localStorage.getItem("token");
-    if (!this.$route.params.nama_kelas) {
-      axios
-        .post(
-          process.env.VUE_APP_BASEURL +
-            "kelas/" +
-            this.$route.params.kelas_id +
-            "?token=" +
-            token,
-          {
-            headers: { "X-Requested-With": "XMLHttpRequest" },
-          }
-        )
-        .then((response) => {
-          this.nama_kelas = response.data.data.nama;
-          this.$emit("nama_kelas", this.nama_kelas);
-          this.$route.params.nama_kelas = this.nama_kelas
-        })
-        .catch((err) => {
-          console.log(err);
-          if(err.response.status == 401)
-          this.parent.logout();
-        });
-    } else {
-      this.nama_kelas = this.$route.params.nama_kelas;
-      this.$emit("nama_kelas", this.nama_kelas);
-    }
     this.callForm05(token);
   },
+  mounted() {
+    // this.pj =this.$route.params.penanggung_jawab;
+    // this.sks=this.$route.params.sks;
+    
+  }
 };
 </script>
 
-<style></style>
+<style scoped>
+.modal-mask {
+  position: fixed;
+  z-index: 9998;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, .5);
+  display: table;
+  transition: opacity .3s ease;
+}
+
+.modal-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+</style>

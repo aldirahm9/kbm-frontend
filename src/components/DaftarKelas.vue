@@ -24,7 +24,7 @@
       <div class="container-fluid">
         <div class="row" v-if="loaded">
             <div v-for="kelas in kelas" :key="kelas.id" class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer">
+              <router-link :to="{name: 'form05', params:{nama_kelas:kelas.nama,kelas_id:kelas.id,pj:kelas.penanggung_jawab,sks:kelas.sks}}" tag="span" style="cursor: pointer">
                 <div class="info-box">
                   <div class="info-box-content col-12">
                     <span class="info-box-text">{{kelas.nama}}</span>
@@ -120,7 +120,7 @@
     created() {
       const token = localStorage.getItem('token')
       axios
-        .post(process.env.VUE_APP_BASEURL + 'kelas?token=' + token, {
+        .get(process.env.VUE_APP_BASEURL + 'kelas?token=' + token, {
           headers: {
             'X-Requested-With': 'XMLHttpRequest'
           }

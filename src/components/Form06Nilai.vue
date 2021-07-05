@@ -1,27 +1,5 @@
 <template>
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Kelas {{nama_kelas}}</h1>
-            <h5>Kamis, 06.00-08.00</h5>
-          </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item"><a href="#">Kelas</a></li>
-              <li class="breadcrumb-item active">
-                Kelas {{nama_kelas}}
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-      <!-- /.container-fluid -->
-    </section>
+<div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel" aria-labelledby="custom-content-below-home-tab">
 
     <!-- Main content -->
     <section class="content">
@@ -50,6 +28,7 @@
             <div class="modal-footer justify-content-between">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
               <button type="button" class="btn btn-primary">Save changes</button>
+              
             </div>
           </div>
           <!-- /.modal-content -->
@@ -69,31 +48,42 @@
                     <tr>
                       <th rowspan="2" style="text-align:center;vertical-align:center">NRM</th>
                       <th class="sticky-col first-col" rowspan="2">Nama</th>
-                      <th colspan="3" style="text-align:center">Tugas</th>
+                      <th :colspan="tugas_ids.length" style="text-align:center">Tugas</th>
                       <th rowspan="2" style="text-align:center">UTS</th>
                       <th rowspan="2" style="text-align:center">UAS</th>
                       <th rowspan="2" style="text-align:center">Nilai Angka</th>
                       <th rowspan="2" style="text-align:center">Nilai Huruf</th>
                     </tr>
                     <tr>
-                      <th>1</th>
-                      <th>2</th>
-                      <th>3</th>
+                     <th v-for="n in tugas_ids.length" :key="n">{{n}}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>3145161324</td>
-                      <td class="sticky-col first-col">Aldi Rahmansyah</td>
-                      <td>90</td>
-                      <td>40</td>
-                      <td>70</td>
-                      <td>50</td>
-                      <td>80</td>
-                      <td>87.5</td>
-                      <td>B+</td>
+                    <tr v-for="form in form06" :key="form.mahasiswa_id">
+                      <td>{{form.nomor_induk}}</td>
+                      <td class="sticky-col first-col">{{form.nama}}</td>
+                      <td v-for="tugas_id in tugas_ids" :key="tugas_id">
+                        <div v-for="tugas in form.tugas" :key="tugas.tugas_id">
+                        <div v-if="tugas">
+                          <div v-if="tugas.tugas_id == tugas_id">
+                            {{tugas.nilai}}
+                          </div>
+                        </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div v-if="form.UTS">
+                          {{form.UTS.nilai}}
+                        </div>
+                      </td>
+                      <td>
+                        <div v-if="form.UAS">
+                        {{form.UAS.nilai}}
+                        </div>
+                      </td>
+                      <td></td>
+                      <td></td>
                     </tr>
-                    
                   </tbody>
                 </table>
               </div>
@@ -102,7 +92,7 @@
         </div>
       </div>
     </section>
-    <!-- /.content -->
+    
   </div>
   <!-- /.content-wrapper -->
 </template>
@@ -115,14 +105,40 @@ export default {
   name: "Form06Nilai",
   data() {
     return {
-      nama_kelas: ''
+      nama_kelas: '',
+      form06:[],
+      tugas_ids: [],
+    }
+  },
+  methods: {
+     callForm06(token) {
+       axios
+        .get(
+          process.env.VUE_APP_BASEURL +
+            "kelas/" +
+            this.$route.params.kelas_id +
+            "/form-06-nilai?token=" +
+            token,
+          {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          }
+        )
+        .then((response) => {
+          this.form06 = response.data.data
+          this.tugas_ids = response.data.meta.tugas_id
+          console.log(response)
+        })
+        .catch((err) => {
+          console.log(err);
+          if (err.response.status == 401) this.$parent.logout();
+        });
     }
   },
   created() {
     const token = localStorage.getItem('token')
     if (!this.$route.params.nama_kelas) {
       axios
-        .post(
+        .get(
           process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +
@@ -146,6 +162,7 @@ export default {
       this.nama_kelas = this.$route.params.nama_kelas;
       this.$emit("nama_kelas", this.nama_kelas);
     }
+    this.callForm06(token)
   },
 };
 </script>

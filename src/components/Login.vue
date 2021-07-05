@@ -9,10 +9,9 @@
             <div class="card">
                 <div class="card-body login-card-body">
                     <p class="login-box-msg">Silahkan Login</p>
-
                     <form @submit.prevent="login">
                         <div class="input-group mb-3">
-                            <input v-model="email" type="email" name="email" class="form-control" placeholder="Email" required>
+                            <input v-model="username" type="text" @keypress="numberOnly($event)" name="username" class="form-control" placeholder="Username" required>
                             <div class="input-group-append">
                                 <div class="input-group-text">
                                     <span class="fas fa-envelope"></span>
@@ -59,7 +58,7 @@
         name: 'Login',
         data() {
             return {
-                email: '',
+                username: '',
                 password: '',
             }
         },
@@ -67,7 +66,7 @@
             login() {
                 axios
                     .post(process.env.VUE_APP_BASEURL + 'auth/login',
-                        {email: this.email, password: this.password},
+                        {username: this.username, password: this.password},
                         {headers: {'X-Requested-With': 'XMLHttpRequest'}})
                     .then(
                         (response) => {
@@ -82,10 +81,21 @@
                     ).catch(
                         (err) => console.log(err)
                     )
-            }
+            },
+              numberOnly: function (evt) {
+                  evt = (evt) ? evt : window.event;
+                  var charCode = (evt.which) ? evt.which : evt.keyCode;
+                  if ((charCode > 31 && (charCode < 48 || charCode > 57))) {
+                      evt.preventDefault();
+                  } else {
+                      return true;
+                  }
+              }
+           
         },
 
     }
+
 </script>
 
 

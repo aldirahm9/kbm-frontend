@@ -5,8 +5,10 @@ import Dashboard from '../components/Dashboard.vue'
 import DaftarKelas from '../components/DaftarKelas.vue'
 import Form05 from '../components/Form05.vue'
 import Form06 from '../components/Form06.vue'
+import Kelas from '../components/Kelas.vue'
 import Form06Nilai from '../components/Form06Nilai.vue'
 import Login from '../components/Login.vue'
+import Tugas from '../components/Tugas.vue'
 
 
 
@@ -36,20 +38,39 @@ const routes =
         component: DaftarKelas
       },
       {
-        path: '/kelas/:kelas_id/form-05',
-        name: 'form05',
-        component: Form05
+        path: '/kelas/:kelas_id',
+        name: 'kelas',
+        component: Kelas,
+        redirect: '/kelas/:kelas_id/form-05',
+        children:
+        [
+          {
+            path: '/kelas/:kelas_id/form-05',
+            name: 'form05',
+            component: Form05,
+            props:true
+          },
+          {
+            path: '/kelas/:kelas_id/form-06/presensi',
+            name: 'form06',
+            component: Form06,
+            props:true
+          },
+          {
+            path: '/kelas/:kelas_id/form-06/nilai',
+            name: 'form06-nilai',
+            component: Form06Nilai,
+            props:true
+          },
+          {
+            path: '/kelas/:kelas_id/tugas',
+            name: 'tugas',
+            component: Tugas,
+            props:true
+          },
+        ]
       },
-      {
-        path: '/kelas/:kelas_id/form-06/presensi',
-        name: 'form06',
-        component: Form06
-      },
-      {
-        path: '/kelas/:kelas_id/form-06/nilai',
-        name: 'form06-nilai',
-        component: Form06Nilai
-      },
+      
     ]
   },
   {

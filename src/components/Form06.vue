@@ -1,83 +1,26 @@
 <template>
-  <!-- Content Wrapper. Contains page content -->
-  <div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <section class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1>Kelas {{nama_kelas}}</h1>
-            <h5>Kamis, 06.00-08.00</h5>
-          </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item"><a href="#">Kelas</a></li>
-              <li class="breadcrumb-item active">
-                Kelas {{nama_kelas}}
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-      <!-- /.container-fluid -->
-    </section>
-
+<div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel" aria-labelledby="custom-content-below-home-tab">
+<br>
     <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
         <div class="row">
           <div class="col-4">
-            <button type="button" class="btn btn-primary"
-            data-toggle="modal" data-target="#modal-lg">
-              Buka Absen
-            </button>
-            <button type="button" class="btn btn-primary"
-            data-toggle="modal" data-target="#modal-lg">
-              Konfirmasi Absen Terbaru 
-            </button>
-            <button type="button" class="btn btn-primary"
-            data-toggle="modal" data-target="#modal-lg">
-              Absen Pertemuan 5
-            </button>
+
           </div>
         </div>
         <br />
-        <div class="modal fade" id="modal-lg">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h4 class="modal-title">Large Modal</h4>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <p>One fine body&hellip;</p>
-            </div>
-            <div class="modal-footer justify-content-between">
-              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary">Save changes</button>
-            </div>
-          </div>
-          <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-      </div>
-      <!-- /.modal -->
         <div class="row">
           <div class="col-md-12">
             <div class="card">
-              <div class="card-header">
-                <h3 class="card-title">Form 06</h3>
-              </div>
+      
               <div class="card-body p-0 table-responsive table-wrapper">
                 <table class="table table-bordered">
                   <thead>
                     <tr>
-                      <th rowspan="2" style="text-align:center;vertical-align:center">NRM</th>
+                      <th rowspan="2" style="width:10px;text-align:center;vertical-align:center">NRM</th>
                       <th class="sticky-col first-col" rowspan="2">Nama</th>
-                      <th :colspan="jumlah_pertemuan" style="text-align:center">Perkuliahan</th>
+                      <th :colspan="jumlah_pertemuan" style="text-align:center">Pertemuan</th>
                     </tr>
                     <tr>
                       <th v-for="n in jumlah_pertemuan" :key="n">{{n}}</th>
@@ -110,8 +53,31 @@
       </div>
     </section>
     <!-- /.content -->
-  </div>
+     <div class="modal fade" id="modal-lg">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Large Modal</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>One fine body&hellip;</p>
+            </div>
+            <div class="modal-footer justify-content-between">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
+            </div>
+          </div>
+          <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+      </div>
+      <!-- /.modal -->
+
   <!-- /.content-wrapper -->
+</div>
 </template>
 
 <script>
@@ -128,9 +94,31 @@ export default {
     }
   },
   methods: {
+    bukaAbsen() {
+      const token = localStorage.getItem('token')
+      axios
+      .post(
+        process.env.VUE_APP_BASEURL +
+          "form-05/" +
+          this.$route.params.kelas_id +
+          "/buka-absen?token=" +
+          token,
+        {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        }
+      )
+      .then((response) => {
+        
+        console.log(response)
+      })
+      .catch((err) => {
+        console.log(err);
+        if (err.response.status == 401) this.$parent.logout();
+      });
+    },
     callForm06(token) {
        axios
-        .post(
+        .get(
           process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +
@@ -155,7 +143,7 @@ export default {
     const token = localStorage.getItem('token')
     if (!this.$route.params.nama_kelas) {
       axios
-        .post(
+        .get(
           process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +

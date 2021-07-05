@@ -75,7 +75,8 @@
                   </p>
                 </router-link>
               </li>
-              <div v-if="$route.path.substr(0,6) == '/kelas'">
+
+              <!-- <div v-if="$route.path.substr(0,6) == '/kelas'">
               <li style="white-space:normal;" class="nav-header header-if">{{nama_kelas}}</li>
               <li class="nav-item">
                 <router-link :to="{name:'form05','params':{nama_kelas:$route.params.nama_kelas,kelas_id:$route.params.kelas_id}}" class="nav-link">
@@ -101,7 +102,7 @@
                   </p>
                 </router-link>
               </li>
-              </div>
+              </div> -->
             </ul>
           </nav>
           <!-- /.sidebar-menu -->
@@ -110,7 +111,7 @@
       </aside>
 
       <keep-alive :include="['DaftarKelas','Home']" :max="4">
-      <router-view @nama_kelas="set_nama_kelas"></router-view>
+      <router-view></router-view>
       </keep-alive>
 
 
@@ -144,14 +145,11 @@ export default {
       localStorage.removeItem("token");
       this.$router.push({name: 'login'});
     },
-    set_nama_kelas(nama) {
-      this.nama_kelas = nama
-    }
   },
   created() {
     const token = localStorage.getItem("token");
     axios
-      .post(process.env.VUE_APP_BASEURL + "auth/me?token=" + token, {
+      .get(process.env.VUE_APP_BASEURL + "auth/me?token=" + token, {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       })
       .then((response) => {
