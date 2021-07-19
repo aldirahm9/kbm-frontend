@@ -12,7 +12,7 @@
               Download Excel
             </button>
             <button type="button" class="btn btn-primary"
-              >
+              @click="uploadExcel()">
               Upload Nlai
             </button>
             <button type="button" class="btn btn-warning"
@@ -21,7 +21,7 @@
             </button>
             <!-- <button type="button" class="btn btn-primary">Upload Nilai</button> -->
           </div>
-          <div class="col-1-md offset-md-9 "><button type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
+          <div class="col-1-md offset-md-9 "><button @click="callForm06()" type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
         </div>
         <br />
         <div class="modal fade" id="modal-lg">
@@ -115,7 +115,7 @@
 
 <script>
 import axios from "axios";
-// import Swal from "sweetalert2";
+import Swal from "sweetalert2";
 
 
 export default {
@@ -127,8 +127,10 @@ export default {
       tugas_ids: [],
     }
   },
+  props: ['kelas_id'],
   methods: {
-     callForm06(token) {
+     callForm06() {
+       const token = localStorage.getItem('token');
        axios
         .get(
           process.env.VUE_APP_BASEURL +
@@ -189,6 +191,41 @@ export default {
         //     document.body.appendChild(link);
         //     link.click();
         //     link.remove();
+      },
+      uploadExcel() {
+        const token = localStorage.getItem('token')
+        Swal.fire({
+          title: 'Masukan Excel Nilai',
+          input: 'file',
+          showCancelButton: true,
+          confirmButtonText: 'Save',
+        }).then((result) => {
+          if(result.isConfirmed) {
+            let formData = new FormData();
+            formData.append('file',result.value)
+            axios.post(
+              process.env.VUE_APP_BASEURL +
+              'kelas/' + this.kelas_id + '/nilai/excel?token=' + token,
+              formData,
+              { headers: { "Content-Type": "multipart/form-data" } }
+            ).then(() => {
+              Swal.fire({
+                title: 'Upload Nilai Berhasil',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false,
+              });
+              this.callForm06();
+            }) 
+            .catch((err) => {
+                console.log(err);
+                if (err.response.status == 401) this.$parent.logout();
+              })
+            }
+        });
+        
       }
   },
   created() {
@@ -219,7 +256,7 @@ export default {
       this.nama_kelas = this.$route.params.nama_kelas;
       this.$emit("nama_kelas", this.nama_kelas);
     }
-    this.callForm06(token)
+    this.callForm06()
   },
 };
 </script>

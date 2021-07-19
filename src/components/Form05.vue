@@ -15,7 +15,7 @@
               Pertemuan Baru
             </button>
           </div>
-          <div class="col-1-md offset-md-10"><button type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
+          <div class="col-1-md offset-md-10"><button @click="callForm05()" type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
         </div>
         <br />
         <div class="row">
@@ -203,7 +203,8 @@ export default {
         }
       });
     },
-    callForm05(token) {
+    callForm05() {
+      const token = localStorage.getItem('token')
       axios
         .get(
           process.env.VUE_APP_BASEURL +
@@ -284,7 +285,7 @@ export default {
       }).then((result) => {
         if(result.isConfirmed) {
           this.materi_baru = result.value;
-          Axios.put(
+          axios.put(
             process.env.VUE_APP_BASEURL +
             'form-05/' + id + '?token=' + token,
             {materi: this.materi_baru},
@@ -292,7 +293,11 @@ export default {
           ).then((response) => {
             console.log(response);
             this.form05[index].materi = this.materi_baru
-          })
+          }) 
+          .catch((err) => {
+              console.log(err);
+              if (err.response.status == 401) this.$parent.logout();
+            })
         }
       });
     },
@@ -387,7 +392,7 @@ export default {
                 showConfirmButton: false,
               });
               this.show_modal=false;
-              this.callForm05(token);
+              this.callForm05();
             })
             .catch((err) => {
               if (err.response) {
@@ -492,8 +497,7 @@ export default {
       this.$emit('kelas',this.kelas_info);
     }
     this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
-    const token = localStorage.getItem("token");
-    this.callForm05(token);
+    this.callForm05();
   },
   mounted() {
 

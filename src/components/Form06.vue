@@ -5,8 +5,8 @@
     <section class="content">
       <div class="container-fluid">
         <div class="row">
-          <div class="col-4">
-
+          <div class="col-1 offset-10">
+            <div class="col-1-md offset-md-10"><button @click="callForm06()" type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
           </div>
         </div>
         <br />

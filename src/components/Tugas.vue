@@ -16,6 +16,7 @@
               Tugas Baru
             </button>
           </div>
+            <div class="col-1-md offset-md-10"><button @click="callTugas()" type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
         </div>
         <br />
         <div class="row">
@@ -126,7 +127,8 @@ export default {
     };
   },
   methods: {
-    callTugas(token) {
+    callTugas() {
+      const token = localStorage.getItem('token');
       axios
         .get(
           process.env.VUE_APP_BASEURL +
@@ -239,7 +241,7 @@ export default {
           showConfirmButton: false,
           timer: 3000
         });
-       this.callTugas(token);
+       this.callTugas();
       }).catch((err) => {
         this.show_modal=false;
         console.log(err);
@@ -276,8 +278,7 @@ export default {
   },
   created() {
     this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
-    const token = localStorage.getItem("token");
-    this.callTugas(token);
+    this.callTugas();
   },
 };
 </script>
