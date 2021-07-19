@@ -1,18 +1,21 @@
 <template>
   <!-- Content Wrapper. Contains page content -->
 
-<div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel" aria-labelledby="custom-content-below-home-tab">
-<br>
+  <div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel"
+    aria-labelledby="custom-content-below-home-tab">
+    <br>
     <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
         <div class="row">
-          <div class="col-2-md">
-            <button v-if="pj" type="button" class="btn btn-primary" @click.prevent="tambahPertemuan">
-            <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-lg"> -->
+          <div v-if="kelas_info" class="col-2-md">
+            <button v-if="kelas_info.penanggung_jawab" type="button" class="btn btn-primary"
+              @click.prevent="tambahPertemuan">
+              <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-lg"> -->
               Pertemuan Baru
             </button>
           </div>
+          <div class="col-1-md offset-md-10"><button type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
         </div>
         <br />
         <div class="row">
@@ -42,7 +45,7 @@
                       <td>{{form.jumlah_mahasiswa}}</td>
                       <td>
                         <i v-show="form.valid_dosen == true" class="fas fa-check"></i>
-                        <button @click="validasi(form.id, index)" v-show="form.valid_dosen == 0 && isDosen"
+                        <button @click="validasiPertemuan(form.id, index)" v-show="form.valid_dosen == 0 && isDosen"
                           type="button" class="btn btn-primary">
                           Validasi
                         </button>
@@ -50,19 +53,25 @@
                       </td>
                       <td>
                         <i v-show="form.valid_mahasiswa == true" class="fas fa-check"></i>
-                        <button @click="validasi(form.id, index)" v-show="form.valid_mahasiswa == 0 && !isDosen"
+                        <button @click="validasiPertemuan(form.id, index)" v-show="form.valid_mahasiswa == 0 && !isDosen"
                           type="button" class="btn btn-primary">
                           Validasi
                         </button>
                         <span v-show="form.valid_mahasiswa == false && isDosen">Waiting...</span>
                       </td>
                       <td v-if="isDosen">
-                        <button type="button" class="btn btn-primary">Tambah Tugas</button>
-                        <button type="button" class="btn btn-info">Ubah materi</button>
+                        <button type="button" @click="ubahMateri(form.id,index)" class="btn btn-success">Ubah
+                          materi</button>
+                        <button type="button" @click="modalValidasi(form.id)" class="btn btn-primary">Validasi
+                          Presensi</button>
+                        <button type="button" class="btn btn-secondary" @click="tutupAbsen(form.id,index)">Tutup Absen</button>
+                        <button type="button" class="btn btn-danger" @click="hapusForm(form.id,index)"><span class="fa fa-trash"></span></button>
                       </td>
                       <td v-else>
-                        <button :disabled="form.hadir" @click="hadirPertemuan(form.id,index)" type="button" class="btn btn-primary">Hadir</button>
-                        <button v-if="pj" type="button" class="btn btn-info">Validasi Presensi</button>
+                        <button :disabled="form.hadir == true" @click="hadirPertemuan(form.id,index)" type="button"
+                          class="btn btn-primary">Hadir</button>
+                        <button v-if="kelas_info.penanggung_jawab" @click="modalValidasi(form.id)" type="button"
+                          class="btn btn-info">Validasi Presensi</button>
                       </td>
                     </tr>
                     <tr v-show="form05.length == 0">
@@ -77,48 +86,61 @@
       </div>
     </section>
     <!-- /.content -->
-    <!-- <div v-if="show_modal">
+    <div v-show="show_modal">
       <transition name="modal">
-        <div class="modal-mask">
-          <div class="modal-wrapper">
-            <div class="modal-dialog modal-lg">
-              <form>
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h4 class="modal-title">Pertemuan Baru</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-
-                  <div class="modal-body">
-                    <div class="form-group">
-                      <label for="materi">Pokok Bahasan</label>
-                      <input type="text" class="form-control" v-model="materi_baru" required />
-                    </div>
-                  </div>
-                  <div class="modal-footer ">
-                    <button type="submit" class="btn btn-primary">
-                      Tambah Pertemuan
-                    </button>
+        <div class="modal-mask" >
+          <div class="modal-wrapper" @click.self="show_modal=false">
+            <div class="modal-dialog" ref="modal" tabindex="0" @keyup.esc="show_modal=false">
+              <div v-if="show_modal" class="modal-content">
+                <div class="modal-header">
+                  <h4 class="modal-title">Validasi Presensi</h4>
+                  <button type="button" class="close" @click="show_modal=false">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div class="table-responsive" style="max-height: 300px;">
+                    <table class="table table-head-fixed">
+                      <thead>
+                        <tr>
+                          <th style="text-align:center">Nama Mahasiswa</th>
+                          <th style="text-align:center">Waktu</th>
+                          <th style="text-align:center">Validasi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="list in listPresensi" :key="list.id" style="height:60px;" @click="clickValidasi(list.id)">
+                          <td style="text-align:center;vertical-align:middle">{{list.nama}}</td>
+                          <td style="text-align:center;vertical-align:middle">{{list.waktu}}</td>
+                          <td style="text-align:center;vertical-align:middle">
+                            <input type="checkbox" :value="list.id" :id="'checkbox_'+list.id" v-model="listValidasi">
+                          </td>
+                        </tr>
+                        <tr v-show="listPresensi.length == 0">
+                          <td colspan="3" style="text-align:center">No data</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </form>
-              /.modal-content
+                <div class="modal-footer" v-show="listPresensi.length != 0">
+                 <button type="button" class="btn btn-primary" @click="validasiPresensi()">Validasi</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </transition>
-      /.modal-dialog
     </div>
-    /.modal -->
-  <!-- /.content-wrapper -->
-</div>
+    <!-- /.modal -->
+    <!-- /.content-wrapper -->
+  </div>
 </template>
 
 <script>
 import axios from "axios";
 import Swal from "sweetalert2";
+import Axios from 'axios';
 
 export default {
   name: "Form05",
@@ -126,16 +148,17 @@ export default {
     return {
       form05: [],
       materi_baru: "",
-      // show_modal: false,
-      isDosen:false
+      show_modal: false,
+      isDosen:false,
+      listValidasi: [],
+      listPresensi: [],
     };
   },
   props: [
-    'pj',
-    'sks',
+    'kelas_info'
     ],
   methods: {
-    validasi(id, index) {
+    validasiPertemuan(id, index) {
       const token = localStorage.getItem("token");
       Swal.fire({
         title: "Validasi Pertemuan?",
@@ -194,6 +217,7 @@ export default {
         )
         .then((response) => {
           this.form05 = response.data.data;
+          console.log('call ' + response);
         })
         .catch((err) => {
           console.log(err);
@@ -215,7 +239,7 @@ export default {
               process.env.VUE_APP_BASEURL +
                 "kelas/" +
                 this.$route.params.kelas_id +
-                "/form-05/add?token=" +
+                "/form-05?token=" +
                 token,
               { materi: this.materi_baru },
               { headers: { "X-Requested-With": "XMLHttpRequest" } }
@@ -237,7 +261,8 @@ export default {
                 valid_dosen: response.data.data.valid_dosen,
                 valid_mahasiswa: response.data.data.valid_mahasiswa,
                 jumlah_mahasiswa: response.data.data.jumlah_mahasiswa,
-                created_at: response.data.data.created_at
+                created_at: response.data.data.created_at,
+                hadir: response.data.data.hadir,
               });
             })
             .catch((err) => {
@@ -247,6 +272,29 @@ export default {
         }
       })
       
+    },
+    ubahMateri(id,index) {
+      var token = localStorage.getItem('token');
+      console.log(id + index);
+      Swal.fire({
+        title: 'Masukan materi baru',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Save',
+      }).then((result) => {
+        if(result.isConfirmed) {
+          this.materi_baru = result.value;
+          Axios.put(
+            process.env.VUE_APP_BASEURL +
+            'form-05/' + id + '?token=' + token,
+            {materi: this.materi_baru},
+            { headers: { "X-Requested-With": "XMLHttpRequest" } }
+          ).then((response) => {
+            console.log(response);
+            this.form05[index].materi = this.materi_baru
+          })
+        }
+      });
     },
     hadirPertemuan(id,index) {
       const token = localStorage.getItem("token");
@@ -288,19 +336,169 @@ export default {
             });
         }
       });
+    },
+    modalValidasi(id) {
+      const token = localStorage.getItem('token');
+      this.show_modal = true;
+      this.$nextTick(() => this.$refs.modal.focus());
+      axios.get(process.env.VUE_APP_BASEURL + 
+            'form-05/' + id +
+            '/unvalid?token=' +
+            token,
+            {
+              headers: { "X-Requested-With": "XMLHttpRequest" },
+            }
+          ).then((response) => {
+            this.listPresensi = response.data.data;
+          })
+              .catch((err) => {
+              if (err.response) {
+                if (err.response.status == 401) {
+                  this.$parent.logout();
+                }
+              }
+            });
+    },
+    validasiPresensi() {
+      const token = localStorage.getItem('token');
+          Swal.fire({
+        title: "Konfirmasi Kehadiran?",
+        confirmButtonText: "Ya",
+        showDenyButton: true,
+        denyButtonText: "Tidak",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios
+            .post(
+              process.env.VUE_APP_BASEURL +
+                "absen/valid?token=" +
+                token,this.listValidasi,
+              {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+              }
+            )
+            .then(() => {
+              Swal.fire({
+                title: 'Berhasil validasi',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false,
+              });
+              this.show_modal=false;
+              this.callForm05(token);
+            })
+            .catch((err) => {
+              if (err.response) {
+                if (err.response.status == 401) {
+                  this.$parent.logout();
+                }
+              }
+            });
+        }
+      });
+
+    },
+    clickValidasi(value) {
+      console.log(this.listValidasi.indexOf(value));
+      if(this.listValidasi.indexOf(value) == -1) {
+        this.listValidasi.push(value);
+      } else {
+        var index = this.listValidasi.indexOf(value);
+        this.listValidasi.splice(index,1);
+      }
+    },
+    tutupAbsen(id,index) {
+      const token = localStorage.getItem('token');
+      Swal.fire({
+        title: "Tutup Kesempatan Hadir?",
+        confirmButtonText: "Ya",
+        showDenyButton: true,
+        denyButtonText: "Tidak",
+      }).then((result) => {
+        if(result.isConfirmed) {
+          Axios.post(
+              process.env.VUE_APP_BASEURL +
+              "form-05/" + id + "/tutup-absen?token=" +
+              token,
+            ).then(() => {
+                Swal.fire({
+                title: 'Kehadiran berhasil ditutup',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false,
+              });
+              this.form05[index].open = 1;
+            }).catch((err) => {
+              if (err.response) {
+                if (err.response.status == 401) {
+                this.$parent.logout();
+                }
+              }
+            });
+        }
+      })
+    },
+    hapusForm(id,index) {
+      const token = localStorage.getItem('token');
+      Swal.fire({
+        title: "Hapus Pertemuan?",
+        text: "Pertemuan yang dihapus tidak bisa dikembalikan lagi",
+        confirmButtonText: "Ya",
+        showDenyButton: true,
+        denyButtonText: "Tidak",
+      }).then((result) => {
+        if(result.isConfirmed) {
+          Swal.fire({
+            title: "Anda yakin?",
+            text: "Pertemuan yang dihapus tidak bisa dikembalikan lagi",
+            confirmButtonText: "Ya",
+            showDenyButton: true,
+            denyButtonText: "Tidak",
+          }).then((result)=> {
+            if(result.isConfirmed) {
+              Axios.delete(
+                process.env.VUE_APP_BASEURL +
+                "form-05/" + id + "?token=" +
+                token,
+            ).then(() => {
+                Swal.fire({
+                title: 'Pertemuan berhasil dihapus',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                showConfirmButton: false,
+              });
+            this.form05.splice(index,1);
+            }).catch((err) => {
+              if (err.response) {
+                if (err.response.status == 401) {
+                this.$parent.logout();
+                }
+              }
+            })
+            }
+          })
+        }
+      })
     }
   },
   created() {
-    console.log(this.$route.params.sks);
-    // this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
+    if(this.kelas_info) {
+      this.$emit('kelas',this.kelas_info);
+    }
+    this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
     const token = localStorage.getItem("token");
     this.callForm05(token);
   },
   mounted() {
-    // this.pj =this.$route.params.penanggung_jawab;
-    // this.sks=this.$route.params.sks;
+
     
-  }
+  },
 };
 </script>
 
@@ -320,5 +518,11 @@ export default {
 .modal-wrapper {
   display: table-cell;
   vertical-align: middle;
+}
+</style>
+
+<style>
+.swal2-container {
+  z-index: 10000;
 }
 </style>

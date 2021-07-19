@@ -24,11 +24,11 @@
       <div class="container-fluid">
         <div class="row" v-if="loaded">
             <div v-for="kelas in kelas" :key="kelas.id" class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas:kelas.nama,kelas_id:kelas.id,pj:kelas.penanggung_jawab,sks:kelas.sks}}" tag="span" style="cursor: pointer">
+              <router-link :to="{name: 'form05', params:{kelas_id:kelas.id,kelas_info:kelas}}" tag="span" style="cursor: pointer">
                 <div class="info-box">
                   <div class="info-box-content col-12">
                     <span class="info-box-text">{{kelas.nama}}</span>
-                    <span class="info-box-number">Kamis, 06:00 - 10:00</span>
+                    <span class="info-box-number">{{kelas.hari}}, {{kelas.jam}}</span>
                   </div>
                   <!-- /.info-box-content -->
                 </div>
@@ -38,7 +38,7 @@
         </div>
         <div class="row" v-if="!loaded">
             <div  class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer">
+              <!-- <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer"> -->
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
@@ -49,11 +49,11 @@
                   </div>
                   <!-- /.info-box-content -->
                 </div>
-              </router-link>
+              <!-- </router-link> -->
               <!-- /.info-box -->
             </div>
             <div  class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer">
+              <!-- <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer"> -->
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
@@ -64,11 +64,11 @@
                   </div>
                   <!-- /.info-box-content -->
                 </div>
-              </router-link>
+              <!-- </router-link> -->
               <!-- /.info-box -->
             </div>
             <div  class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer">
+              <!-- <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer"> -->
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
@@ -79,11 +79,11 @@
                   </div>
                   <!-- /.info-box-content -->
                 </div>
-              </router-link>
+              <!-- </router-link> -->
               <!-- /.info-box -->
             </div>
             <div  class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer">
+              <!-- <router-link :to="{name: 'form05', params:{nama_kelas: kelas.nama,kelas_id: kelas.id}}" tag="span" style="cursor: pointer"> -->
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
@@ -94,7 +94,7 @@
                   </div>
                   <!-- /.info-box-content -->
                 </div>
-              </router-link>
+              <!-- </router-link> -->
               <!-- /.info-box -->
             </div>
         </div>

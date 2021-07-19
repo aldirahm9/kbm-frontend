@@ -42,6 +42,7 @@ const routes =
         name: 'kelas',
         component: Kelas,
         redirect: '/kelas/:kelas_id/form-05',
+        props:true,
         children:
         [
           {

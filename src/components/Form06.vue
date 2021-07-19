@@ -130,7 +130,7 @@ export default {
         )
         .then((response) => {
           this.form06 = response.data.data
-          this.jumlah_pertemuan = response.data.meta.pertemuan
+          this.jumlah_pertemuan = response.data.meta.jumlah_pertemuan
           console.log(response)
         })
         .catch((err) => {

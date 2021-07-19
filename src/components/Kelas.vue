@@ -6,16 +6,18 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>Kelas {{ nama_kelas }}</h1>
-            <h5>Kamis, 06.00-08.00</h5>
+            <h1>Kelas {{ kelas.nama }}</h1>
+            <h5>{{kelas.hari}}, {{kelas.jam}}</h5>
+            <button v-if="isDosen" type="button" @click="uploadRPS()" class="btn btn-primary">Upload RPS</button>
+            <button type="button" @click="downloadRPS()" class="btn btn-success">Download RPS</button>
           </div>
-          <div class="col-sm-6">
+          <!-- <div class="col-sm-6">
             <ol class="breadcrumb float-sm-right">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
               <li class="breadcrumb-item"><a href="#">Kelas</a></li>
-              <li class="breadcrumb-item active">Kelas {{ nama_kelas }}</li>
+              <li class="breadcrumb-item active">Kelas {{ kelas.nama }}</li>
             </ol>
-          </div>
+          </div> -->
         </div>
       </div>
       <!-- /.container-fluid -->
@@ -29,21 +31,21 @@
     <div class="col-12">
                 <ul class="nav nav-tabs" id="custom-content-below-tab" role="tablist">
               <li class="nav-item">
-                  <router-link :to="{name:'form05','params':{nama_kelas:$route.params.nama_kelas,kelas_id:$route.params.kelas_id}}" class="nav-link" id="custom-content-below-home-tab" data-toggle="pill" href="#custom-content-below-home" role="tab" aria-controls="custom-content-below-home" aria-selected="true">Pertemuan</router-link>
+                  <router-link v-if="kelas" :to="{name:'form05','params':{kelas_id:kelas.id,kelas_info:kelas}}" class="nav-link" id="custom-content-below-home-tab" data-toggle="pill" href="#custom-content-below-home" role="tab" aria-controls="custom-content-below-home" aria-selected="true">Pertemuan</router-link>
               </li>
               <li class="nav-item">
-                  <router-link :to="{name:'form06','params':{nama_kelas:$route.params.nama_kelas,kelas_id:$route.params.kelas_id}}" class="nav-link" id="custom-content-below-profile-tab" data-toggle="pill" href="#custom-content-below-profile" role="tab" aria-controls="custom-content-below-profile" aria-selected="false">Presensi</router-link>
+                  <router-link v-if="kelas" :to="{name:'form06','params':{kelas_id:kelas.id,kelas_info:kelas}}" class="nav-link" id="custom-content-below-profile-tab" data-toggle="pill" href="#custom-content-below-profile" role="tab" aria-controls="custom-content-below-profile" aria-selected="false">Presensi</router-link>
               </li>
               <li class="nav-item">
-                  <router-link :to="{name:'tugas','params':{nama_kelas:$route.params.nama_kelas,kelas_id:$route.params.kelas_id}}" class="nav-link" id="custom-content-below-settings-tab" data-toggle="pill" href="#custom-content-below-settings" role="tab" aria-controls="custom-content-below-settings" aria-selected="false">Tugas</router-link>
+                  <router-link v-if="kelas" :to="{name:'tugas','params':{kelas_id:kelas.id,kelas:kelas}}" class="nav-link" id="custom-content-below-settings-tab" data-toggle="pill" href="#custom-content-below-settings" role="tab" aria-controls="custom-content-below-settings" aria-selected="false">Tugas</router-link>
               </li>
               <li class="nav-item">
-                  <router-link v-if="isDosen" :to="{name:'form06-nilai','params':{nama_kelas:$route.params.nama_kelas,kelas_id:$route.params.kelas_id}}" class="nav-link" id="custom-content-below-settings-tab" data-toggle="pill" href="#custom-content-below-settings" role="tab" aria-controls="custom-content-below-settings" aria-selected="false">Nilai</router-link>
+                  <router-link v-if="isDosen" :to="{name:'form06-nilai','params':{kelas_id:kelas.id}}" class="nav-link" id="custom-content-below-settings-tab" data-toggle="pill" href="#custom-content-below-settings" role="tab" aria-controls="custom-content-below-settings" aria-selected="false">Nilai</router-link>
               </li>
             </ul>
             <div class="tab-content" id="custom-content-below-tabContent">
                 <keep-alive>
-                    <router-view ></router-view>
+                    <router-view></router-view>
                 </keep-alive>
             </div>
             </div>
@@ -98,21 +100,31 @@ export default {
   name: "Kelas",
   data() {
     return {
-      nama_kelas: "",
-      isDosen: false,
+      kelas:{},
       show_modal: false,
-      penanggung_jawab: false,
-      sks: null
+      isDosen: false,
     };
   },
+  props: [
+    'kelas_info'
+  ],
   methods: {
- 
-      
+    uploadRPS() {
+
+
+   
+    },
+    downloadRPS() {
+
+    }
+
+
   },
   created() {
     this.isDosen = JSON.parse(localStorage.getItem("isDosen"));
     const token = localStorage.getItem("token");
-    if (!this.$route.params.nama_kelas) {
+    if (!this.kelas_info) {
+      console.log('hit api');
       axios
         .get(
           process.env.VUE_APP_BASEURL +
@@ -125,12 +137,8 @@ export default {
           }
         )
         .then((response) => {
-          this.nama_kelas = response.data.data.nama;
-          this.sks = response.data.data.sks;
-          this.penanggung_jawab = response.data.data.penanggung_jawab;
-          this.$route.params.nama_kelas = this.nama_kelas;
-          this.$route.params.pj = this.penanggung_jawab;
-          this.$route.params.sks = this.sks;
+          this.kelas = response.data.data;
+          this.$route.params.kelas_info = this.kelas;
         })
         .catch((err) => {
           console.log(err);
@@ -138,10 +146,7 @@ export default {
           this.parent.logout();
         });
     } else {
-      this.nama_kelas = this.$route.params.nama_kelas;
-      this.penanggung_jawab = this.$route.params.penanggung_jawab;
-      this.sks = this.$route.params.sks;
-    
+      this.kelas = this.kelas_info;
     }
   },
 };

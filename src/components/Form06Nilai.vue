@@ -1,16 +1,27 @@
 <template>
 <div class="tab-pane fade show active" id="custom-content-below-home" role="tabpanel" aria-labelledby="custom-content-below-home-tab">
 
+    <br>
     <!-- Main content -->
     <section class="content">
       <div class="container-fluid">
-        <div class="row">
-          <div class="col-2">
-            <!-- <button type="button" class="btn btn-primary"
-            data-toggle="modal" data-target="#modal-lg">
-              Pertemuan Baru
-            </button> -->
+            <div class="row">
+          <div  class="col-2-md">
+            <button type="button" class="btn btn-success"
+              @click="downloadExcel()">
+              Download Excel
+            </button>
+            <button type="button" class="btn btn-primary"
+              >
+              Upload Nlai
+            </button>
+            <button type="button" class="btn btn-warning"
+              >
+              Ubah Bobot
+            </button>
+            <!-- <button type="button" class="btn btn-primary">Upload Nilai</button> -->
           </div>
+          <div class="col-1-md offset-md-9 "><button type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
         </div>
         <br />
         <div class="modal fade" id="modal-lg">
@@ -39,9 +50,9 @@
         <div class="row">
           <div class="col-md-12">
             <div class="card">
-              <div class="card-header">
+              <!-- <div class="card-header">
                 <h3 class="card-title">Form 06</h3>
-              </div>
+              </div> -->
               <div class="card-body p-0 table-responsive table-wrapper">
                 <table class="table table-bordered">
                   <thead>
@@ -62,7 +73,7 @@
                     <tr v-for="form in form06" :key="form.mahasiswa_id">
                       <td>{{form.nomor_induk}}</td>
                       <td class="sticky-col first-col">{{form.nama}}</td>
-                      <td v-for="tugas_id in tugas_ids" :key="tugas_id">
+                      <td v-for="tugas_id in tugas_ids" :key="tugas_id.nama">
                         <div v-for="tugas in form.tugas" :key="tugas.tugas_id">
                         <div v-if="tugas">
                           <div v-if="tugas.tugas_id == tugas_id">
@@ -84,6 +95,11 @@
                       <td></td>
                       <td></td>
                     </tr>
+                    <tr v-if="form06.length ==0">
+                      <td colspan="7" style="text-align:center">
+                      No Data
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -101,6 +117,7 @@
 import axios from "axios";
 // import Swal from "sweetalert2";
 
+
 export default {
   name: "Form06Nilai",
   data() {
@@ -117,7 +134,7 @@ export default {
           process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +
-            "/form-06-nilai?token=" +
+            "/nilai?token=" +
             token,
           {
             headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -126,13 +143,53 @@ export default {
         .then((response) => {
           this.form06 = response.data.data
           this.tugas_ids = response.data.meta.tugas_id
-          console.log(response)
+          // console.log(response)
         })
         .catch((err) => {
           console.log(err);
           if (err.response.status == 401) this.$parent.logout();
         });
-    }
+      },
+      downloadExcel() {
+        console.log('donlot');
+        const token = localStorage.getItem('token');
+          axios
+        .get(
+          process.env.VUE_APP_BASEURL +
+            "kelas/" +
+            this.$route.params.kelas_id +
+            "/nilai/excel?token=" +
+            token,
+            {responseType: 'blob'}
+        )
+        .then((response) => {
+          var fileURL = URL.createObjectURL(response.data);
+          
+          const link = document.createElement('a');
+          link.href = fileURL;
+          link.download = "Nilai_" + this.nama_kelas + ".xlsx";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        })
+        .catch((err) => {
+          console.log(err);
+          if (err.response.status == 401) this.$parent.logout();
+        });
+
+         //easy way
+        // const token = localStorage.getItem('token')
+        //  const url =  process.env.VUE_APP_BASEURL +
+        //     "kelas/" +
+        //     this.$route.params.kelas_id +
+        //     "/nilai/excel?token=" +
+        //     token;
+        //     const link = document.createElement('a');
+        //     link.href = url;
+        //     document.body.appendChild(link);
+        //     link.click();
+        //     link.remove();
+      }
   },
   created() {
     const token = localStorage.getItem('token')

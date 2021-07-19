@@ -37,7 +37,8 @@
                             </div>
                             <!-- /.col -->
                             <div class="col-4">
-                                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                                <button-spinner v-bind="{isLoading,status}" :disabled="isLoading"
+                                 type="submit" class="btn btn-primary btn-block">Sign In</button-spinner>
                             </div>
                             <!-- /.col -->
                         </div>
@@ -54,22 +55,33 @@
 
 <script>
     import axios from 'axios';
+    import ButtonSpinner from 'vue-button-spinner'
+    import Swal from "sweetalert2";
+
     export default {
         name: 'Login',
         data() {
             return {
                 username: '',
                 password: '',
+                isLoading: false,
+                status: '',
             }
+        },
+        components:{
+            ButtonSpinner
         },
         methods: {
             login() {
+                this.isLoading = true;
+                var ini = this;
                 axios
                     .post(process.env.VUE_APP_BASEURL + 'auth/login',
-                        {username: this.username, password: this.password},
-                        {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+                        {username: this.username, password: this.password})
                     .then(
                         (response) => {
+                            this.isLoading = false;
+                            this.status = 'success';
                             console.log(response)
                             const token = response.data.access_token;
                             const base64Url = token.split('.')[1];
@@ -79,26 +91,40 @@
                             this.$router.push('home');
                         }
                     ).catch(
-                        (err) => console.log(err)
-                    )
+                        function (err) {
+                            console.log(err);
+                            ini.isLoading = false;
+                            ini.status = 'error';
+                            Swal.fire({
+                                title: 'Username dan Password tidak cocok!',
+                                icon: 'error',
+                                toast: true,
+                                position: 'top-end',
+                                timer: 3000,
+                                showConfirmButton: false,
+                            });
+                            ini.clear();
+                        }
+                    ) 
             },
-              numberOnly: function (evt) {
-                  evt = (evt) ? evt : window.event;
-                  var charCode = (evt.which) ? evt.which : evt.keyCode;
-                  if ((charCode > 31 && (charCode < 48 || charCode > 57))) {
-                      evt.preventDefault();
-                  } else {
-                      return true;
-                  }
-              }
+            clear() {
+                setTimeout(() => {
+                    this.status = ''
+                }, 1600);
+                this.password = '';
+            },
+            numberOnly: function (evt) {
+                evt = (evt) ? evt : window.event;
+                var charCode = (evt.which) ? evt.which : evt.keyCode;
+                if ((charCode > 31 && (charCode < 48 || charCode > 57))) {
+                    evt.preventDefault();
+                } else {
+                    return true;
+                }
+            }
            
         },
 
     }
 
 </script>
-
-
-<style>
-
-</style>

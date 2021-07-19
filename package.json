@@ -16,6 +16,7 @@
     "placeholder-loading": "^0.2.6",
     "sweetalert2": "^10.3.0",
     "vue": "^2.6.11",
+    "vue-button-spinner": "^2.2.1",
     "vue-plugin-load-script": "^1.3.2",
     "vue-router": "^3.4.3"
   },
