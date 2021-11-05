@@ -5,15 +5,17 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
+        <div class="row">
+          <div class="col-md-6 col-sm-1 col-xs-6">
             <h1>Daftar Kelas</h1>
           </div>
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
-              <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">Daftar Kelas</li>
-            </ol>
+          <div class="col-md-6 col-sm-1 col-xs-6">
+            <div style="float:right">
+              <label style="padding-right:10px;" for="Semester">Semester</label>
+              <select v-model="semester">
+                <option v-for="n in semesterList" :value="n.semester" :key="n.semester">{{n.semester}}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div><!-- /.container-fluid -->
@@ -28,7 +30,8 @@
                 <div class="info-box">
                   <div class="info-box-content col-12">
                     <span class="info-box-text">{{kelas.nama}}</span>
-                    <span class="info-box-number">{{kelas.hari}}, {{kelas.jam}}</span>
+                    <span v-if="kelas.hari" class="info-box-number">{{kelas.hari}}, {{kelas.jam}}</span>
+                    <span v-else class="info-box-number">-</span>
                   </div>
                   <!-- /.info-box-content -->
                 </div>
@@ -42,9 +45,9 @@
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
-                    <div class="ph-col-4 big"></div>
-                    <div class="ph-col-8 empty big"></div>
                     <div class="ph-col-8 big"></div>
+                    <div class="ph-col-4 empty big"></div>
+                    <div class="ph-col-6 big"></div>
                   </div>
                   </div>
                   <!-- /.info-box-content -->
@@ -57,9 +60,9 @@
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
-                    <div class="ph-col-4 big"></div>
-                    <div class="ph-col-8 empty big"></div>
                     <div class="ph-col-8 big"></div>
+                    <div class="ph-col-4 empty big"></div>
+                    <div class="ph-col-6 big"></div>
                   </div>
                   </div>
                   <!-- /.info-box-content -->
@@ -72,9 +75,9 @@
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
-                    <div class="ph-col-4 big"></div>
-                    <div class="ph-col-8 empty big"></div>
                     <div class="ph-col-8 big"></div>
+                    <div class="ph-col-4 empty big"></div>
+                    <div class="ph-col-6 big"></div>
                   </div>
                   </div>
                   <!-- /.info-box-content -->
@@ -87,9 +90,9 @@
                 <div class="info-box">
                   <div class="info-box-content col-12">
                   <div class="ph-row" style="padding-top:10px">
-                    <div class="ph-col-4 big"></div>
-                    <div class="ph-col-8 empty big"></div>
                     <div class="ph-col-8 big"></div>
+                    <div class="ph-col-4 empty big"></div>
+                    <div class="ph-col-6 big"></div>
                   </div>
                   </div>
                   <!-- /.info-box-content -->
@@ -114,29 +117,47 @@
     data() {
       return {
         kelas: [],
-        loaded: false
+        loaded: false,
+        semesterList: [],
+        semester: ''
       }
     },
     created() {
-      const token = localStorage.getItem('token')
-      axios
-        .get(process.env.VUE_APP_BASEURL + 'kelas?token=' + token, {
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        })
-        .then(
-          (response) => {
-            console.log(response.data)
-            this.kelas = response.data.data
-            this.loaded = true
-          }
-        ).catch(
-          (err) => console.log(err)
-        )
+      const semester = localStorage.getItem('semester');
+      this.semester = semester;
+      this.callDaftarKelas(semester);
+    },
+    methods: {
+      callDaftarKelas(semester) {
+        const token = localStorage.getItem('token')
+        this.loaded = false;
+        axios
+          .get(`${process.env.VUE_APP_BASEURL}kelas/${semester}?token=${token}`, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(
+            (response) => {
+              console.log(response.data)
+              this.kelas = response.data.data
+              this.loaded = true
+              this.semesterList = response.data.meta.semester
+              // localStorage.setItem('semesterAktif',this.semester);
+            }
+          ).catch(
+            (err) => console.log(err)
+          )
+        }
+    },
+    watch: {
+      semester: function() {
+        localStorage.setItem('semester', this.semester);
+        this.callDaftarKelas(this.semester);
+      }
     },
     destroyed() {
-      console.log('destroyed')
+      
     },
   }
 </script>

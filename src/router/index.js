@@ -3,12 +3,15 @@ import VueRouter from 'vue-router'
 import Home from '../components/Home.vue'
 import Dashboard from '../components/Dashboard.vue'
 import DaftarKelas from '../components/DaftarKelas.vue'
+import Monitoring from '../components/Monitoring.vue'
 import Form05 from '../components/Form05.vue'
 import Form06 from '../components/Form06.vue'
 import Kelas from '../components/Kelas.vue'
-import Form06Nilai from '../components/Form06Nilai.vue'
+import Nilai from '../components/Nilai.vue'
 import Login from '../components/Login.vue'
 import Tugas from '../components/Tugas.vue'
+import RekapPresensi from '../components/RekapPresensi.vue'
+import Dosen from '../components/Dosen.vue'
 
 
 
@@ -18,9 +21,10 @@ const routes =
 [
   {
     path: '/',
-    name: '',
+    name: 'dashboard',
     redirect: 'login',
     component: Dashboard,
+    props:true,
     meta: {
       requiresAuth: true
     },
@@ -30,12 +34,27 @@ const routes =
         path: '/home',
         name: 'home',
         component: Home,
-        
+        props:true
       },
       {
         path: '/daftar-kelas',
         name: 'daftar-kelas',
         component: DaftarKelas
+      },
+      {
+        path: '/monitoring',
+        name: 'monitoring',
+        component: Monitoring
+      },
+      {
+        path: '/rekap-presensi',
+        name: 'rekap-presensi',
+        component: RekapPresensi
+      },
+      {
+        path: '/dosen',
+        name: 'dosen',
+        component: Dosen
       },
       {
         path: '/kelas/:kelas_id',
@@ -60,12 +79,46 @@ const routes =
           {
             path: '/kelas/:kelas_id/form-06/nilai',
             name: 'form06-nilai',
-            component: Form06Nilai,
+            component: Nilai,
             props:true
           },
           {
             path: '/kelas/:kelas_id/tugas',
             name: 'tugas',
+            component: Tugas,
+            props:true
+          },
+        ]
+      },
+      {
+        path: '/monitoring/kelas/:kelas_id',
+        name: 'monitoring-kelas',
+        component: Kelas,
+        redirect: '/monitoring/kelas/:kelas_id/form-05',
+        props:true,
+        children:
+        [
+          {
+            path: '/monitoring/kelas/:kelas_id/form-05',
+            name: 'monitoring-form05',
+            component: Form05,
+            props:true
+          },
+          {
+            path: '/monitoring/kelas/:kelas_id/form-06/presensi',
+            name: 'monitoring-form06',
+            component: Form06,
+            props:true
+          },
+          {
+            path: '/monitoring/kelas/:kelas_id/form-06/nilai',
+            name: 'monitoring-form06-nilai',
+            component: Nilai,
+            props:true
+          },
+          {
+            path: '/monitoring/kelas/:kelas_id/tugas',
+            name: 'monitoring-tugas',
             component: Tugas,
             props:true
           },

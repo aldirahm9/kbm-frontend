@@ -10,13 +10,19 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-2-md">
-            <button type="button" class="btn btn-primary"
-              @click="modalTambah()">
+            <button v-if="isDosen && !isMonitoring && isSemesterAktif" type="button" class="btn btn-primary"
+              @click="tambahTugas()">
               <!-- <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-lg"> -->
               Tugas Baru
             </button>
           </div>
-            <div class="col-1-md offset-md-10"><button @click="callTugas()" type="button" class="btn btn-secondary"><span class="fa fa-sync"></span></button></div>
+            <div class="col-1-md offset-md-10">
+              <button @click="callTugas()" type="button" class="btn btn-secondary">
+                <span v-if="!loading" class="fa fa-sync"></span>
+                <span v-if="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span v-if="loading" class="sr-only">Loading...</span>
+              </button>
+            </div>
         </div>
         <br />
         <div class="row">
@@ -29,11 +35,11 @@
                     <tr>
                       <th style="width: 10px">#</th>
                       <th>Tanggal</th>
-                      <th>Tugas</th>
-                      <th>Bobot%</th>
+                      <th >Tugas</th>
+                      <th :style="totalBobot >= 100 ? {'color':'red'} : ''">Bobot% ({{totalBobot}}/100)</th>
                       <th>Tipe</th>
                       <th v-if="!isDosen">Nilai</th>
-                      <th v-else>Action</th>
+                      <th v-else v-show="!isMonitoring && isSemesterAktif">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -46,18 +52,28 @@
                       <td v-if="each.tipe == 1">UTS</td>
                       <td v-if="each.tipe == 2">UAS</td>
                       <td v-if="!isDosen">{{each.nilai}}</td>
-                      <td v-else>
-                        <button type="button" class="btn btn-secondary" @click="modalEdit(each.id,index)">
+                      <td v-else v-show="!isMonitoring && isSemesterAktif">
+                        <button type="button" class="btn btn-secondary" @click="ubahTugas(each.id,index)">
                           Edit
                         </button>
                         <button type="button" class="btn btn-danger" @click="hapusTugas(each.id,index)"><span class="fa fa-trash"></span></button>
                       </td>
                     </tr>
                     <tr v-show="tugas.length == 0">
-                      <td colspan="8" style="text-align:center">No data</td>
+                      <td colspan="8" style="text-align:center">
+                        <div v-if="loading" class="spinner-border text-primary" role="status">
+                          <span class="sr-only">Loading...</span>
+                        </div>
+                        <div v-if="!loading">No Data</div>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
+                <br>
+                <div v-if="!isDosen">
+                  <h3>Nilai Akhir : {{nilai_akhir}}</h3>
+                  <h3>Nilai Huruf : B</h3>
+                </div>
               </div>
             </div>
           </div>
@@ -65,7 +81,7 @@
       </div>
     </section>
     <!-- /.content -->
-    <div v-if="show_modal">
+    <!-- <div v-if="show_modal">
       <transition name="modal">
         <div class="modal-mask">
           <div class="modal-wrapper" @click.self="show_modal=false">
@@ -100,9 +116,9 @@
             </div>
           </div>
         </div>
-      </transition>
+      </transition> -->
       <!-- /.modal-dialog -->
-    </div>
+    <!-- </div> -->
     <!-- /.modal -->
   <!-- /.content-wrapper -->
 </div>
@@ -119,16 +135,38 @@ export default {
       tugas: [],
       isDosen: false,
       show_modal: false,
-      nama_baru: null,
-      bobot_baru: null,
-      tipe_baru: 0,
+      nilai_akhir: 0,
       modal: null, //model 0 untuk tambah, modal 1 untuk edit
-      id_edit_tugas:null
+      id_edit_tugas:null,
+      loading: true,
+      totalBobot: 0
     };
+  },
+  watch: {
+    bobotArr(val) {
+      console.log(val)
+      let totalNumber = 0;
+      for (let i = 0, l = val.length; i < l; i++) {
+        totalNumber += val[i];
+      }
+      this.totalBobot= totalNumber;
+    },
+  },
+  computed: {
+    bobotArr() {
+      return this.tugas.map(a => a.bobot)
+    },
+    isMonitoring() {
+      return this.$route.name.substr(0,10) == 'monitoring' ? true : false;
+    },
+    isSemesterAktif() {
+      return localStorage.getItem('semester') == localStorage.getItem('semesterAktif')
+    },
   },
   methods: {
     callTugas() {
       const token = localStorage.getItem('token');
+      this.loading = true
       axios
         .get(
           process.env.VUE_APP_BASEURL +
@@ -141,24 +179,58 @@ export default {
           }
         )
         .then((response) => {
-          this.tugas = response.data.data;
+          this.tugas = response.data.data
+          this.nilai_akhir = response.data.meta.nilai_akhir
+          this.loading = false
         })
         .catch((err) => {
           console.log(err);
-          if (err.response.status == 401) this.$parent.logout();
+          if (err?.response?.status == 401) this.$parent.logout();
         });
     },
-    tambahTugas() {
-      const token = localStorage.getItem('token');
-      axios.post(
+    async tambahTugas() {
+      const {value: formValues} = await Swal.fire({
+        title: 'Buat Tugas',
+        html:
+          '<input id="swal-input1" autocomplete="off" class="swal2-input" placeholder="Nama Tugas">' +
+          '<input id="swal-input2" class="swal2-input" autocomplete="off" placeholder="Bobot Tugas">' +
+          '<select id="swal-input3" class="swal2-input"  name="type"> ' +
+                            '<option value="0">Tugas</option>' +
+                            '<option value="1">UTS</option>' +
+                            '<option value="2">UAS</option>' +
+                          '</select>',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Save',
+        preConfirm: () => {
+          if(!document.getElementById('swal-input1').value) {
+            Swal.showValidationMessage('Nama tugas kosong!');
+          }
+          else if(!document.getElementById('swal-input2').value) {
+            Swal.showValidationMessage('Bobot tugas kosong!');
+          }
+          else if (isNaN(document.getElementById('swal-input2').value)) {
+            Swal.showValidationMessage('Bobot tugas harus berupa angka!');
+          }
+          else 
+          return [
+            document.getElementById('swal-input1').value,
+            document.getElementById('swal-input2').value,
+            document.getElementById('swal-input3').value,
+          ]
+        }
+      });
+      if(formValues) {
+        const token = localStorage.getItem('token');
+        axios.post(
            process.env.VUE_APP_BASEURL +
             "kelas/" +
             this.$route.params.kelas_id +
             "/tugas?token=" +
             token,{
-              nama: this.nama_baru,
-              tipe: this.tipe_baru,
-              bobot: this.bobot_baru,
+              nama: formValues[0],
+              bobot: parseInt(formValues[1]),
+              tipe: formValues[2],
             }
       ).then((response) => {
         this.show_modal=false;
@@ -174,8 +246,18 @@ export default {
       }).catch((err) => {
         this.show_modal=false;
         console.log(err);
-        if (err.response.status == 401) this.$parent.logout();
+        if (err?.response?.status == 401) this.$parent.logout();
+        if (err?.response?.status == 403) {
+           Swal.fire({
+          title: 'Pertemuan belum cukup untuk melaksanakan UAS',
+          icon: 'error',
+          showConfirmButton: false,
+          timer: 3000
+        });
+        }
       })
+      }
+      
     },
     hapusTugas(id,index) {
       const token = localStorage.getItem('token');
@@ -210,26 +292,50 @@ export default {
               });
             this.tugas.splice(index,1);
             }).catch((err) => {
-              if (err.response) {
-                if (err.response.status == 401) {
-                this.$parent.logout();
-                }
+              console.log(err)
+              if (err?.response?.status == 401) {
+              this.$parent.logout();
               }
+            
             })
             }
           })
         }
       });
     },
-    ubahTugas() {
+    async ubahTugas(id,index) {
+      const {value: formValues} = await Swal.fire({
+        title: 'Ubah Tugas',
+        html:
+          '<input id="swal-input1" class="swal2-input" placeholder="Nama Tugas" value="' + this.tugas[index].nama + '">' +
+          '<input id="swal-input2" class="swal2-input" onClick="numberOnly()" placeholder="Bobot Tugas" value="' + this.tugas[index].bobot + '">'  +
+          '<select id="swal-input3" class="swal2-input"  name="type">' +
+                            '<option value="0" ' + (this.tugas[index].tipe == 0 ? 'selected' : '') +'>Tugas</option>' +
+                            '<option value="1" ' + (this.tugas[index].tipe == 1 ? 'selected' : '') +'>UTS</option>' +
+                            '<option value="2" ' + (this.tugas[index].tipe == 2 ? 'selected' : '') +'>UAS</option>' +
+                          '</select>',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Save',
+        preConfirm: () => {
+          return [
+            document.getElementById('swal-input1').value,
+            document.getElementById('swal-input2').value,
+            document.getElementById('swal-input3').value,
+          ]
+        }
+      });
+
+      if(formValues) {
+      // console.log(formValues[0]);
       const token = localStorage.getItem('token');
       axios.put(
            process.env.VUE_APP_BASEURL +
-            "tugas/" + this.id_edit_tugas+ "?token=" +
+            "tugas/" + id+ "?token=" +
             token,{
-              nama: this.nama_baru,
-              tipe: this.tipe_baru,
-              bobot: this.bobot_baru,
+              nama: formValues[0],
+              bobot: parseInt(formValues[1]),
+              tipe: formValues[2],
             }
       ).then(() => {
         this.show_modal=false;
@@ -245,27 +351,20 @@ export default {
       }).catch((err) => {
         this.show_modal=false;
         console.log(err);
-        if (err.response.status == 401) this.$parent.logout();
+        if (err?.response?.status == 401) this.$parent.logout();
       })
+      }
     },
-    modalTambah() {
-      this.nama_baru=null;
-      this.tipe_baru=0;
-      this.bobot_baru=null;
-      this.modal=0;
-      this.show_modal = true;
-      this.$nextTick(() => this.$refs.modal.focus());
-    },
-    modalEdit(id,index) {
-      console.log(id,index);
-      this.nama_baru = this.tugas[index].nama;
-      this.tipe_baru = this.tugas[index].tipe;
-      this.bobot_baru = this.tugas[index].bobot;
-      this.id_edit_tugas = id;
-      this.modal=1;
-      this.show_modal = true;
-      this.$nextTick(() => this.$refs.modal.focus());
-    },
+    // modalEdit(id,index) {
+    //   console.log(id,index);
+    //   this.nama_baru = this.tugas[index].nama;
+    //   this.tipe_baru = this.tugas[index].tipe;
+    //   this.bobot_baru = this.tugas[index].bobot;
+    //   this.id_edit_tugas = id;
+    //   this.modal=1;
+    //   this.show_modal = true;
+    //   this.$nextTick(() => this.$refs.modal.focus());
+    // },
     numberOnly: function (evt) {
         evt = (evt) ? evt : window.event;
         var charCode = (evt.which) ? evt.which : evt.keyCode;
@@ -274,7 +373,7 @@ export default {
         } else {
             return true;
         }
-    }
+    },
   },
   created() {
     this.isDosen = JSON.parse(localStorage.getItem("isDosen"));

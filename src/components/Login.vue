@@ -29,7 +29,7 @@
                         <div class="row">
                             <div class="col-8">
                                 <div class="icheck-primary">
-                                    <input type="checkbox" id="remember">
+                                    <input type="checkbox" id="remember" v-model="remember">
                                     <label for="remember">
                                         Remember Me
                                     </label>
@@ -66,6 +66,8 @@
                 password: '',
                 isLoading: false,
                 status: '',
+                nama: '',
+                remember: false
             }
         },
         components:{
@@ -76,36 +78,85 @@
                 this.isLoading = true;
                 var ini = this;
                 axios
-                    .post(process.env.VUE_APP_BASEURL + 'auth/login',
-                        {username: this.username, password: this.password})
+                    .post(process.env.VUE_APP_BASEURL + 'auth/login', {
+                        username: this.username,
+                        password: this.password,
+                        remember: this.remember
+                    })
                     .then(
                         (response) => {
-                            this.isLoading = false;
-                            this.status = 'success';
                             console.log(response)
                             const token = response.data.access_token;
                             const base64Url = token.split('.')[1];
-                            const base64 = base64Url.replace('-','+').replace('_','/');
+                            const base64 = base64Url.replace('-', '+').replace('_', '/');
                             console.log(JSON.parse(window.atob(base64)));
                             localStorage.setItem('token', token);
-                            this.$router.push('home');
+
+                            axios
+                                .get(process.env.VUE_APP_BASEURL + "auth/me?token=" + token, {
+                                    headers: {
+                                        "X-Requested-With": "XMLHttpRequest"
+                                    },
+                                })
+                                .then((response) => {
+                                    this.nama = response.data.nama
+                                    this.username = response.data.username
+                                    localStorage.setItem('username',response.data.username);
+                                    if (response.data.role == 2) {
+                                        localStorage.setItem('isDosen', true);
+                                        localStorage.setItem('isAdmin', false);
+                                        localStorage.setItem('isTpjm', false);
+                                    } else if (response.data.role == 3) {
+                                        localStorage.setItem('isDosen', true);
+                                        localStorage.setItem('isTpjm', true);
+                                        localStorage.setItem('isAdmin', false);
+                                    } else if (response.data.role == 4) {
+                                        localStorage.setItem('isAdmin', true);
+                                        localStorage.setItem('isDosen', false);
+                                        localStorage.setItem('isTpjm', false);
+                                    } else {
+                                        localStorage.setItem('isDosen', false);
+                                        localStorage.setItem('isTpjm', false);
+                                        localStorage.setItem('isAdmin', false);
+                                    }
+                                    this.isLoading = false;
+                                    this.status = 'success';
+                                    this.$router.push({name:'home',params:{nama_info:response.data.nama,username_info:response.data.username}});
+                                })
+                                .catch((err) => {
+                                    console.log(err)
+                                    this.logout()
+                                });
+                            
+                            
                         }
                     ).catch(
                         function (err) {
+                            
                             console.log(err);
                             ini.isLoading = false;
                             ini.status = 'error';
-                            Swal.fire({
-                                title: 'Username dan Password tidak cocok!',
-                                icon: 'error',
-                                toast: true,
-                                position: 'top-end',
-                                timer: 3000,
-                                showConfirmButton: false,
-                            });
+                            if(err?.response?.status == 401) {
+                                Swal.fire({
+                                    title: 'Username dan Password tidak cocok!',
+                                    icon: 'error',
+                                    toast: true,
+                                    position: 'top-end',
+                                    timer: 3000,
+                                    showConfirmButton: false,
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Server Error!',
+                                    icon: 'error',
+                                    text: err,
+                                    showConfirmButton: false,
+                                });
+
+                            }
                             ini.clear();
                         }
-                    ) 
+                    )
             },
             clear() {
                 setTimeout(() => {
