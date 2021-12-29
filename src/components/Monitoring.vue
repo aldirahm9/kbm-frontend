@@ -5,11 +5,11 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-6 col-sm-1 col-xs-6">
-            <h1>Daftar Kelas</h1>
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Monitoring</h1>
           </div>
-          <div class="col-md-6 col-sm-1 col-xs-6">
+          <div class="col-sm-6">
             <div style="float:right">
               <label style="padding-right:10px;" for="Semester">Semester</label>
               <select v-model="semester">
@@ -26,12 +26,11 @@
       <div class="container-fluid">
         <div class="row" v-if="loaded">
             <div v-for="kelas in kelas" :key="kelas.id" class="col-md-3 col-sm-6 col-12">
-              <router-link :to="{name: 'form05', params:{kelas_id:kelas.id,kelas_info:kelas}}" tag="span" style="cursor: pointer">
+              <router-link :to="{name: 'monitoring-form05', params:{kelas_id:kelas.id,kelas_info:kelas}}" tag="span" style="cursor: pointer">
                 <div class="info-box">
                   <div class="info-box-content col-12">
                     <span class="info-box-text">{{kelas.nama}}</span>
-                    <span v-if="kelas.hari" class="info-box-number">{{kelas.hari}}, {{kelas.jam}}</span>
-                    <span v-else class="info-box-number">-</span>
+                    <span class="info-box-number">{{kelas.dosen[0]}}<span v-if="kelas.dosen[1]">, {{kelas.dosen[1]}}</span></span>
                   </div>
                   <!-- /.info-box-content -->
                 </div>
@@ -113,7 +112,7 @@
   import axios from 'axios'
 
   export default {
-    name: 'DaftarKelas',
+    name: 'Monitoring',
     data() {
       return {
         kelas: [],
@@ -122,17 +121,12 @@
         semester: ''
       }
     },
-    created() {
-      const semester = localStorage.getItem('semester');
-      this.semester = semester;
-      this.callDaftarKelas(semester);
-    },
     methods: {
-      callDaftarKelas(semester) {
+      callKelas(semester) {
         const token = localStorage.getItem('token')
         this.loaded = false;
         axios
-          .get(`${process.env.VUE_APP_BASEURL}kelas/${semester}?token=${token}`, {
+          .get(`${process.env.VUE_APP_BASEURL}monitoring/kelas/${semester}?token=${token}`, {
             headers: {
               'X-Requested-With': 'XMLHttpRequest'
             }
@@ -143,7 +137,6 @@
               this.kelas = response.data.data
               this.loaded = true
               this.semesterList = response.data.meta.semester
-              // localStorage.setItem('semesterAktif',this.semester);
             }
           ).catch(
             (err) => console.log(err)
@@ -153,11 +146,16 @@
     watch: {
       semester: function() {
         localStorage.setItem('semester', this.semester);
-        this.callDaftarKelas(this.semester);
+        this.callKelas(this.semester);
       }
     },
+    created() {
+      const semester = localStorage.getItem('semester');
+      this.semester = semester;
+      this.callKelas(semester);
+    },
     destroyed() {
-      
+      console.log('monitoring destroyed')
     },
   }
 </script>

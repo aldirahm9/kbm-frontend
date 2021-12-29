@@ -20,9 +20,12 @@
 
           <!-- Notifications Dropdown Menu -->
           <li class="nav-item dropdown">
-            <a class="nav-link" data-toggle="dropdown" href="#">
-              <i class="far fa-user" v-show="userName"></i>
-              {{ userName }}
+            <a v-if="loaded" class="nav-link" data-toggle="dropdown" href="#">
+              <i class="far fa-user"></i>
+              {{ nama }}
+            </a>
+            <a v-else class="nav-link" data-toggle="dropdown" href="#">
+              <i class="far fa-user"></i>
             </a>
             <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
               <a @click="logout" href="#" class="dropdown-item">
@@ -51,7 +54,7 @@
         <div class="sidebar">
           <!-- Sidebar Menu -->
           <nav class="mt-2">
-            <ul
+            <ul v-if="loaded"
               class="nav nav-pills nav-sidebar flex-column nav-child-indent"
               data-widget="treeview"
               role="menu"
@@ -67,11 +70,35 @@
                   </p>
                 </router-link>
               </li>
-              <li class="nav-item">
+              <li v-show="!isAdmin" class="nav-item">
                 <router-link :to="{name:'daftar-kelas'}" class="nav-link">
                   <i class="nav-icon fas fa-th"></i>
                   <p>
                     Daftar Kelas
+                  </p>
+                </router-link>
+              </li>
+              <li v-show="!isDosen && !isAdmin" class="nav-item">
+                <router-link :to="{name:'rekap-presensi'}" class="nav-link">
+                  <i class="nav-icon fas fa-th"></i>
+                  <p>
+                    Rekap Presensi
+                  </p>
+                </router-link>
+              </li>
+              <li v-show="isTpjm" class="nav-item">
+                <router-link :to="{name:'monitoring'}" class="nav-link">
+                  <i class="nav-icon fas fa-th"></i>
+                  <p>
+                    Monitoring
+                  </p>
+                </router-link>
+              </li>
+              <li v-show="isAdmin" class="nav-item">
+                <router-link :to="{name:'dosen'}" class="nav-link">
+                  <i class="nav-icon fas fa-th"></i>
+                  <p>
+                    Dosen
                   </p>
                 </router-link>
               </li>
@@ -104,13 +131,18 @@
               </li>
               </div> -->
             </ul>
+            <div v-else class="d-flex justify-content-center overflow-hidden">
+                  <div class="spinner-border text-primary" role="status">
+                              <span class="sr-only">Loading...</span>
+                            </div>
+               </div>
           </nav>
           <!-- /.sidebar-menu -->
         </div>
         <!-- /.sidebar -->
       </aside>
 
-      <keep-alive :include="['DaftarKelas','Home']" :max="4">
+      <keep-alive :include="['DaftarKelas','Home','Monitoring']" :max="4">
       <router-view></router-view>
       </keep-alive>
 
@@ -132,38 +164,86 @@
 <script>
 import axios from "axios";
 
+
 export default {
   name: "Dashboard",
   data() {
     return {
-      userName: "",
-      nama_kelas: '',
+      dataNama: "",
+      username: "",
+      isTpjm: false,
+      isDosen: false,
+      isAdmin: false,
+      loaded: false,
     };
   },
+  props: [
+    'nama_info',
+    'username_info'
+  ],
   methods: {
     logout() {
       localStorage.removeItem("token");
       this.$router.push({name: 'login'});
     },
   },
+  computed: {
+    nama() {
+      return this.nama_info == null ? this.dataNama : this.nama_info;
+    }
+  },
   created() {
-    const token = localStorage.getItem("token");
+    console.log('dashboard created');
+    if(!this.nama_info) {
+      console.log('hit api, gaada props');
+       const token = localStorage.getItem("token");
     axios
       .get(process.env.VUE_APP_BASEURL + "auth/me?token=" + token, {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       })
       .then((response) => {
-        console.log(response.data.nama);
-        this.userName = response.data.nama;
-        if(response.data.dosen == 1) 
-          localStorage.setItem('isDosen',true)
-        else 
-          localStorage.setItem('isDosen',false)
+        this.dataNama = response.data.nama;
+        this.username = response.data.username;
+        localStorage.setItem('username',this.username);
+        if(response.data.role == 2){
+          localStorage.setItem('isDosen',true);
+          localStorage.setItem('isTpjm',false);
+          localStorage.setItem('isAdmin',false);
+          this.isDosen = true;
+        }else if(response.data.role ==3) {
+          localStorage.setItem('isDosen',true);
+          localStorage.setItem('isTpjm',true);
+          localStorage.setItem('isAdmin',false);
+          this.isTpjm = true;
+          this.isDosen = true;
+        }else if(response.data.role ==4) {
+          localStorage.setItem('isAdmin',true);
+          localStorage.setItem('isDosen',false);
+          localStorage.setItem('isTpjm',false);
+          this.isAdmin = true;
+        }else{
+          localStorage.setItem('isDosen',false);
+          localStorage.setItem('isTpjm',false);
+          localStorage.setItem('isAdmin',false);
+          this.isTpjm = false;
+        }
+        this.loaded=true;
       })
       .catch((err) => {
         console.log(err)
         this.logout()
       });
+    }else{
+      console.log('ada user_name');
+      this.dataNama = this.nama_info;
+      this.username = this.username_info;
+      localStorage.setItem('username', this.username);
+      this.isDosen = JSON.parse(localStorage.getItem('isDosen')) 
+      this.isTpjm = JSON.parse(localStorage.getItem('isTpjm'))
+      this.isAdmin = JSON.parse(localStorage.getItem('isAdmin'))
+      this.loaded=true;
+    }
+    
   },
   watch: {
     '$route'() { 
@@ -189,4 +269,17 @@ export default {
   text-align:center;
   width: 1.6rem;
 }
+
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: text-bottom;
+    border: .25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-animation: spinner-border .75s linear infinite !important;
+    animation: spinner-border .75s linear infinite !important;
+}
+
 </style>
